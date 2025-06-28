@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { loginUser } from '../../store/actions/authActions';
-import { clearError, selectIsLoading, selectError } from '../../store/slices/authSlice';
+import { clearErrors, selectIsLoading, selectError } from '../../store/slices/authSlice';
 
 function LoginForm({ switchMode }) {
   const [email, setEmail] = useState('');
@@ -16,8 +16,8 @@ function LoginForm({ switchMode }) {
 
   // Clear errors when component mounts or unmounts
   useEffect(() => {
-    dispatch(clearError());
-    return () => dispatch(clearError());
+    dispatch(clearErrors());
+    return () => dispatch(clearErrors());
   }, [dispatch]);
 
   // Form validation
@@ -68,7 +68,7 @@ function LoginForm({ switchMode }) {
     
     // Clear global error
     if (error) {
-      dispatch(clearError());
+      dispatch(clearErrors());
     }
   };
 

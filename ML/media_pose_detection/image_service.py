@@ -33,14 +33,14 @@ face_detection = mp_face_detection.FaceDetection(model_selection=1, min_detectio
 
 class BodyAnalyzer:
     def __init__(self):
-        print("🚀 Initializing Hugging Face + MediaPipe Body Analyzer...")
-        print("📊 Accuracy: 90-95%")
-        print("💰 Cost: $0.00")
+        print("Initializing Hugging Face + MediaPipe Body Analyzer...")
+        print("Accuracy: 90-95%")
+        print("Cost: $0.00")
         
     def download_image(self, image_url):
         """Download and process image from URL"""
         try:
-            print(f"📥 Downloading image from: {image_url}")
+            print(f"Downloading image from: {image_url}")
             response = requests.get(image_url, timeout=30)
             response.raise_for_status()
             
@@ -53,7 +53,7 @@ class BodyAnalyzer:
             # Convert to RGB for MediaPipe
             rgb_image = cv2.cvtColor(opencv_image, cv2.COLOR_BGR2RGB)
             
-            print(f"✅ Image downloaded successfully: {rgb_image.shape}")
+            print(f"Image downloaded successfully: {rgb_image.shape}")
             return rgb_image
             
         except Exception as e:
@@ -62,7 +62,7 @@ class BodyAnalyzer:
     def extract_pose_landmarks(self, image):
         """Extract pose landmarks using MediaPipe"""
         try:
-            print("🔍 Extracting pose landmarks...")
+            print("Extracting pose landmarks...")
             results = pose.process(image)
             
             if not results.pose_landmarks:
@@ -71,7 +71,7 @@ class BodyAnalyzer:
             landmarks = results.pose_landmarks.landmark
             segmentation_mask = results.segmentation_mask
             
-            print(f"✅ Found {len(landmarks)} pose landmarks")
+            print(f"Found {len(landmarks)} pose landmarks")
             return landmarks, segmentation_mask
             
         except Exception as e:
@@ -89,7 +89,7 @@ class BodyAnalyzer:
     
     def estimate_real_measurements(self, landmarks, image_width, image_height):
         """Estimate real body measurements from pose landmarks"""
-        print("📏 Calculating body measurements...")
+        print("Calculating body measurements...")
         
         try:
             # Key landmark indices
@@ -215,7 +215,7 @@ class BodyAnalyzer:
     def analyze_skin_tone_advanced(self, image, segmentation_mask):
         """Advanced skin tone analysis using face detection + color analysis"""
         try:
-            print("🎨 Analyzing skin tone...")
+            print("Analyzing skin tone...")
             
             # First, try face detection for more accurate skin tone
             face_results = face_detection.process(image)
@@ -339,11 +339,11 @@ class BodyAnalyzer:
                 else:
                     body_type = "rectangle"
             
-            print(f"✅ Body type determined: {body_type}")
+            print(f"Body type determined: {body_type}")
             return body_type
             
         except Exception as e:
-            print(f"⚠️ Body type analysis warning: {e}")
+            print(f"Body type analysis warning: {e}")
             return "rectangle"
     
     def calculate_confidence_score(self, landmarks, measurements, image_quality):
@@ -416,11 +416,11 @@ class BodyAnalyzer:
                 }
             }
             
-            print(f"✅ Analysis completed successfully in {processing_time}s")
+            print(f"Analysis completed successfully in {processing_time}s")
             return result
             
         except Exception as e:
-            print(f"❌ Analysis failed: {str(e)}")
+            print(f"Analysis failed: {str(e)}")
             raise Exception(f"Analysis failed: {str(e)}")
 
 # Initialize analyzer
@@ -428,7 +428,7 @@ analyzer = BodyAnalyzer()
 
 @app.route('/analyze-body', methods=['POST'])
 def analyze_body():
-    """🆓 FREE body analysis endpoint"""
+    """FREE body analysis endpoint"""
     try:
         data = request.json
         image_url = data.get('image_url')
@@ -439,7 +439,7 @@ def analyze_body():
                 "error": "image_url is required"
             }), 400
         
-        print(f"📥 Received analysis request for: {image_url}")
+        print(f"Received analysis request for: {image_url}")
         
         result = analyzer.analyze_image(image_url)
         
@@ -470,10 +470,10 @@ def health():
         "accuracy": "90-95%",
         "cost": "$0.00",
         "components": {
-            "mediapipe": "✅ Active",
-            "pose_detection": "✅ Ready",
-            "face_detection": "✅ Ready",
-            "segmentation": "✅ Ready"
+            "mediapipe": "Active",
+            "pose_detection": "Ready",
+            "face_detection": "Ready",
+            "segmentation": "Ready"
         }
     })
 
@@ -498,11 +498,11 @@ def analyze_test():
         }), 500
 
 if __name__ == '__main__':
-    print("🚀 Starting Hugging Face + MediaPipe Body Analysis Service...")
-    print("📊 Accuracy: 90-95%")
-    print("💰 Cost: $0.00")
-    print("🔧 Components: MediaPipe Pose + Face Detection + Segmentation")
-    print("🌐 Server starting on http://localhost:5000")
-    print("📖 API Docs: http://localhost:5000/health")
+    print("Starting Hugging Face + MediaPipe Body Analysis Service...")
+    print("Accuracy: 90-95%")
+    print("Cost: $0.00")
+    print("Components: MediaPipe Pose + Face Detection + Segmentation")
+    print("Server starting on http://localhost:5000")
+    print("API Docs: http://localhost:5000/health")
     
     app.run(host='0.0.0.0', port=5000, debug=True)

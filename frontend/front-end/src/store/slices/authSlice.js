@@ -25,7 +25,7 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     // Synchronous actions
-    clearError: (state) => {
+    clearErrors: (state) => {
       state.error = null;
     },
     clearAuthState: (state) => {
@@ -137,7 +137,7 @@ const authSlice = createSlice({
 });
 
 // Export actions
-export const { clearError, clearAuthState, updateUserProfile } = authSlice.actions;
+export const { clearErrors, clearAuthState, updateUserProfile } = authSlice.actions;
 
 // Selectors
 export const selectAuth = (state) => state.auth;
