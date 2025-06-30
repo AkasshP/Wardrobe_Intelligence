@@ -16,7 +16,7 @@ try:
     HAS_TRANSFORMERS = True
 except ImportError:
     HAS_TRANSFORMERS = False
-    print("⚠️ Transformers not installed. Using rule-based recommendations.")
+    print("Transformers not installed. Using rule-based recommendations.")
 
 app = Flask(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -282,7 +282,7 @@ class SexyDressRecommendationEngine:
             return round(min(100, max(0, score)), 2)
             
         except Exception as e:
-            print(f"⚠️ Error calculating style score: {e}")
+            print(f"Error calculating style score: {e}")
             return 50.0
     
     def calculate_sexiness_match_score(self, dress: Dict[str, Any], preference: str = 'high') -> float:
@@ -369,11 +369,11 @@ class SexyDressRecommendationEngine:
             
             # Get user data
             user_data = self.get_user_measurements(analysis_id)
-            print(f"👤 User: {user_data['body_type']} body type, {user_data['skin_tone']} skin tone")
+            print(f" User: {user_data['body_type']} body type, {user_data['skin_tone']} skin tone")
             
             # Fetch available dresses
             dresses = self.fetch_sexy_dresses(limit=50)  # Get more to filter from
-            print(f"👗 Found {len(dresses)} sexy dresses to analyze")
+            print(f" Found {len(dresses)} sexy dresses to analyze")
             
             recommendations = []
             
