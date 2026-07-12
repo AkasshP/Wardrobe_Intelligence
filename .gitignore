@@ -1,2 +1,35 @@
-application.properties
-target
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+venv/
+.venv/
+
+# Environment
+.env
+*.env.local
+
+# Uploads
+uploads/
+
+# Node
+node_modules/
+frontend/build/
+
+# Terraform
+*.tfstate
+*.tfstate.*
+*.tfvars
+.terraform/
+.terraform.lock.hcl
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store

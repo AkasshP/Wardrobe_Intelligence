@@ -1,0 +1,7 @@
+aws_region             = "ap-south-1"
+project_name           = "wardrobe-intelligence"
+db_username            = "wardrobe_admin"
+db_password            = "CHANGE_ME_strong_password_123"
+jwt_secret             = "CHANGE_ME_jwt_secret"
+stripe_secret_key      = "sk_test_your_key_here"
+stripe_publishable_key = "pk_test_your_key_here"
