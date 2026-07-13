@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
-from app.middleware.auth_middleware import get_current_user
+from app.middleware.auth_middleware import get_current_user_or_guest
 from app.dynamo import user_items_table, products_table, from_decimal, to_decimal
 from boto3.dynamodb.conditions import Key, Attr
 
@@ -26,7 +26,7 @@ def get_product(product_id: int) -> dict | None:
 
 
 @router.get("")
-def get_cart(user: dict = Depends(get_current_user)):
+def get_cart(user: dict = Depends(get_current_user_or_guest)):
     resp = user_items_table.query(
         KeyConditionExpression=Key("user_id").eq(user["id"]) & Key("sk").begins_with("cart#")
     )
@@ -54,7 +54,7 @@ def get_cart(user: dict = Depends(get_current_user)):
 
 
 @router.post("/add")
-def add_to_cart(req: AddToCartRequest, user: dict = Depends(get_current_user)):
+def add_to_cart(req: AddToCartRequest, user: dict = Depends(get_current_user_or_guest)):
     product = get_product(req.product_id)
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
@@ -88,13 +88,13 @@ def add_to_cart(req: AddToCartRequest, user: dict = Depends(get_current_user)):
 
 
 @router.delete("/{item_id}")
-def remove_from_cart(item_id: str, user: dict = Depends(get_current_user)):
+def remove_from_cart(item_id: str, user: dict = Depends(get_current_user_or_guest)):
     user_items_table.delete_item(Key={"user_id": user["id"], "sk": f"cart#{item_id}"})
     return {"message": "Removed from cart"}
 
 
 @router.delete("")
-def clear_cart(user: dict = Depends(get_current_user)):
+def clear_cart(user: dict = Depends(get_current_user_or_guest)):
     resp = user_items_table.query(
         KeyConditionExpression=Key("user_id").eq(user["id"]) & Key("sk").begins_with("cart#")
     )
@@ -105,7 +105,7 @@ def clear_cart(user: dict = Depends(get_current_user)):
 
 # Wishlist
 @router.get("/wishlist")
-def get_wishlist(user: dict = Depends(get_current_user)):
+def get_wishlist(user: dict = Depends(get_current_user_or_guest)):
     resp = user_items_table.query(
         KeyConditionExpression=Key("user_id").eq(user["id"]) & Key("sk").begins_with("wish#")
     )
@@ -127,7 +127,7 @@ def get_wishlist(user: dict = Depends(get_current_user)):
 
 
 @router.post("/wishlist/add")
-def add_to_wishlist(req: WishlistRequest, user: dict = Depends(get_current_user)):
+def add_to_wishlist(req: WishlistRequest, user: dict = Depends(get_current_user_or_guest)):
     item_id = str(uuid.uuid4())
     user_items_table.put_item(Item=to_decimal({
         "user_id": user["id"],
@@ -139,6 +139,6 @@ def add_to_wishlist(req: WishlistRequest, user: dict = Depends(get_current_user)
 
 
 @router.delete("/wishlist/{item_id}")
-def remove_from_wishlist(item_id: str, user: dict = Depends(get_current_user)):
+def remove_from_wishlist(item_id: str, user: dict = Depends(get_current_user_or_guest)):
     user_items_table.delete_item(Key={"user_id": user["id"], "sk": f"wish#{item_id}"})
     return {"message": "Removed from wishlist"}

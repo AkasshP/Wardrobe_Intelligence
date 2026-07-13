@@ -25,6 +25,12 @@ function PrivateRoute({ children }) {
   return user ? children : <Navigate to="/login" />;
 }
 
+function GuestRoute({ children }) {
+  const { loading } = useAuth();
+  if (loading) return <div className="loading">Loading...</div>;
+  return children;
+}
+
 function AppRoutes() {
   return (
     <>
@@ -33,20 +39,24 @@ function AppRoutes() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+
+          {/* Guest-accessible routes */}
+          <Route path="/" element={<GuestRoute><Dashboard /></GuestRoute>} />
+          <Route path="/shop" element={<GuestRoute><Shop /></GuestRoute>} />
+          <Route path="/cart" element={<GuestRoute><Cart /></GuestRoute>} />
+          <Route path="/wishlist" element={<GuestRoute><Wishlist /></GuestRoute>} />
+          <Route path="/try-on" element={<GuestRoute><TryOn /></GuestRoute>} />
+          <Route path="/body-scan" element={<GuestRoute><BodyScan /></GuestRoute>} />
+
+          {/* Auth-required routes */}
           <Route path="/wardrobe" element={<PrivateRoute><Wardrobe /></PrivateRoute>} />
           <Route path="/upload" element={<PrivateRoute><Upload /></PrivateRoute>} />
           <Route path="/suggestions" element={<PrivateRoute><Suggestions /></PrivateRoute>} />
-          <Route path="/shop" element={<PrivateRoute><Shop /></PrivateRoute>} />
           <Route path="/gaps" element={<PrivateRoute><GapAnalysis /></PrivateRoute>} />
           <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
-          <Route path="/cart" element={<PrivateRoute><Cart /></PrivateRoute>} />
-          <Route path="/wishlist" element={<PrivateRoute><Wishlist /></PrivateRoute>} />
           <Route path="/checkout" element={<PrivateRoute><Checkout /></PrivateRoute>} />
           <Route path="/order-confirmation/:orderId" element={<PrivateRoute><OrderConfirmation /></PrivateRoute>} />
           <Route path="/orders" element={<PrivateRoute><Orders /></PrivateRoute>} />
-          <Route path="/body-scan" element={<PrivateRoute><BodyScan /></PrivateRoute>} />
-          <Route path="/try-on" element={<PrivateRoute><TryOn /></PrivateRoute>} />
         </Routes>
       </main>
     </>

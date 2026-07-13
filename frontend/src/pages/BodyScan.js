@@ -1,7 +1,9 @@
 import { useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
+
+const GUEST_SCAN_LIMIT = 3;
 
 const INSTRUCTIONS = [
   { icon: "1", title: "Wear a simple t-shirt & jeans", desc: "Avoid coats, jackets, or layered outfits. A plain fitted t-shirt and jeans work best for accurate try-on results." },
@@ -21,11 +23,15 @@ const OCCASIONS = [
 ];
 
 export default function BodyScan() {
-  const { user, setUser } = useAuth();
+  const { user, setUser, isGuest } = useAuth();
   const navigate = useNavigate();
   const fileRef = useRef();
 
   const [step, setStep] = useState("instructions");
+  const [scanAttempts, setScanAttempts] = useState(() => {
+    const saved = localStorage.getItem("bodyScanAttempts");
+    return saved ? parseInt(saved, 10) : 0;
+  });
   const [preview, setPreview] = useState(null);
   const [file, setFile] = useState(null);
   const [errors, setErrors] = useState([]);
@@ -51,6 +57,12 @@ export default function BodyScan() {
 
   const handleAnalyze = async () => {
     if (!file) return;
+
+    if (isGuest && scanAttempts >= GUEST_SCAN_LIMIT) {
+      setStep("signup");
+      return;
+    }
+
     setStep("validating");
 
     const form = new FormData();
@@ -84,7 +96,14 @@ export default function BodyScan() {
           localStorage.setItem("bodyPhoto", small);
         };
         img.src = preview;
-        setUser({ ...user, measurements: data.measurements, body_type: data.body_type });
+        if (!isGuest) {
+          setUser({ ...user, measurements: data.measurements, body_type: data.body_type });
+        }
+        if (isGuest) {
+          const newCount = scanAttempts + 1;
+          setScanAttempts(newCount);
+          localStorage.setItem("bodyScanAttempts", newCount.toString());
+        }
         setStep("results");
       }
     } catch (err) {
@@ -100,8 +119,10 @@ export default function BodyScan() {
   const handleSaveEdits = async () => {
     setSaving(true);
     try {
-      await api.post("/api/analysis/measurements", { ...editMeasurements, gender });
-      setUser({ ...user, measurements: { ...editMeasurements, gender } });
+      if (!isGuest) {
+        await api.post("/api/analysis/measurements", { ...editMeasurements, gender });
+        setUser({ ...user, measurements: { ...editMeasurements, gender } });
+      }
       setStep("occasion");
     } catch {}
     setSaving(false);
@@ -133,6 +154,12 @@ export default function BodyScan() {
       <div className="cart-hero">
         <h1>Body Scan</h1>
         <p>Upload a full-body photo to get your measurements</p>
+        {isGuest && (
+          <p style={{ fontSize: "0.75rem", opacity: 0.7, marginTop: "0.5rem" }}>
+            {GUEST_SCAN_LIMIT - scanAttempts} free {GUEST_SCAN_LIMIT - scanAttempts === 1 ? "scan" : "scans"} remaining
+            &nbsp;·&nbsp;<Link to="/register" style={{ color: "inherit", textDecoration: "underline" }}>Sign up for unlimited</Link>
+          </p>
+        )}
       </div>
 
       <div className="page">
@@ -265,6 +292,18 @@ export default function BodyScan() {
                   </>
                 )}
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* SIGNUP PROMPT (guest limit reached) */}
+        {step === "signup" && (
+          <div className="cart-empty">
+            <h3>You've used all {GUEST_SCAN_LIMIT} free body scans</h3>
+            <p>Create a free account to get unlimited body scans and save your measurements.</p>
+            <div style={{ display: "flex", gap: "1rem", justifyContent: "center", marginTop: "1.5rem" }}>
+              <Link to="/register" className="btn-primary">Sign Up Free</Link>
+              <Link to="/login" className="btn-secondary">Already have an account? Log in</Link>
             </div>
           </div>
         )}

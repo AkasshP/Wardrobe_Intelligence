@@ -17,16 +17,37 @@ api.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+  } else {
+    const guestId = localStorage.getItem("guest_id");
+    if (guestId) {
+      config.headers["X-Guest-ID"] = guestId;
+    }
   }
   return config;
 });
+
+// Auth-required paths — only redirect to login on 401 for these
+const AUTH_REQUIRED_PATHS = [
+  "/api/auth/me",
+  "/api/wardrobe",
+  "/api/outfits",
+  "/api/analysis",
+  "/api/gaps",
+  "/api/orders",
+  "/api/ai/outfit-advice",
+  "/api/ai/gap-analysis",
+];
 
 api.interceptors.response.use(
   (res) => res,
   (err) => {
     if (err.response?.status === 401) {
-      localStorage.removeItem("token");
-      window.location.href = "/login";
+      const url = err.config?.url || "";
+      const isAuthRequired = AUTH_REQUIRED_PATHS.some((p) => url.includes(p));
+      if (isAuthRequired) {
+        localStorage.removeItem("token");
+        window.location.href = "/login";
+      }
     }
     return Promise.reject(err);
   }

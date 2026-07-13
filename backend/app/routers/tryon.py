@@ -6,7 +6,7 @@ import base64
 from pathlib import Path
 from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException, Query
 from app.config import get_settings
-from app.middleware.auth_middleware import get_current_user
+from app.middleware.auth_middleware import get_current_user_or_guest
 from app.dynamo import products_table, from_decimal
 import replicate
 
@@ -36,7 +36,7 @@ def virtual_tryon(
     product_id: int = Form(None),
     garment_description: str = Form("clothing garment"),
     article_type: str = Form(""),
-    user: dict = Depends(get_current_user),
+    user: dict = Depends(get_current_user_or_guest),
 ):
     """Start async virtual try-on. Returns prediction ID to poll."""
     if not settings.replicate_api_token:
@@ -94,7 +94,7 @@ def virtual_tryon(
 @router.get("/status")
 def check_tryon_status(
     prediction_id: str = Query(...),
-    user: dict = Depends(get_current_user),
+    user: dict = Depends(get_current_user_or_guest),
 ):
     """Poll for try-on result."""
     try:

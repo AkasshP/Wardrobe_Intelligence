@@ -3,11 +3,9 @@ import uuid
 from pathlib import Path
 from fastapi import APIRouter, Depends, UploadFile, File
 from pydantic import BaseModel
-from sqlalchemy.orm import Session
-from app.database import get_db
 from app.config import get_settings
-from app.middleware.auth_middleware import get_current_user
-from app.models.user import User
+from app.middleware.auth_middleware import get_current_user, get_current_user_or_guest
+from app.dynamo import users_table, to_decimal
 from app.services.size_service import measurements_to_size
 from app.services.body_service import validate_photo, extract_measurements
 
@@ -27,7 +25,6 @@ class ManualMeasurements(BaseModel):
 @router.post("/body/validate")
 async def validate_body_photo(file: UploadFile = File(...)):
     """Validate photo before processing. Returns errors if photo is not suitable."""
-    # Use /tmp for session-based temp storage (no permanent save)
     tmp_dir = Path("/tmp/body")
     tmp_dir.mkdir(parents=True, exist_ok=True)
 
@@ -46,8 +43,7 @@ async def validate_body_photo(file: UploadFile = File(...)):
 async def process_body_photo(
     image_path: str,
     gender: str = "Men",
-    user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    user: dict = Depends(get_current_user_or_guest),
 ):
     """Process a validated photo and extract measurements."""
     result = extract_measurements(image_path)
@@ -55,16 +51,20 @@ async def process_body_photo(
     measurements = result["measurements"]
     measurements["gender"] = gender
 
-    # Get size recommendation
     size_info = measurements_to_size(
         measurements["chest"], measurements["waist"], measurements["hips"], gender
     )
 
-    # Save to user profile
-    user.measurements = measurements
-    user.body_type = result["body_type"]
-    db.commit()
-    db.refresh(user)
+    # Save to user profile in DynamoDB (skip for guests)
+    if not user.get("is_guest") and user.get("email"):
+        users_table.update_item(
+            Key={"email": user["email"]},
+            UpdateExpression="SET measurements = :m, body_type = :b",
+            ExpressionAttributeValues=to_decimal({
+                ":m": measurements,
+                ":b": result["body_type"],
+            }),
+        )
 
     return {
         "measurements": measurements,
@@ -77,11 +77,9 @@ async def process_body_photo(
 @router.post("/body")
 async def analyze_body(
     file: UploadFile = File(...),
-    user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    user: dict = Depends(get_current_user_or_guest),
 ):
     """Full pipeline: validate + process in one call."""
-    # Use /tmp — photo is session-based, only results saved to DB
     tmp_dir = Path("/tmp/body")
     tmp_dir.mkdir(parents=True, exist_ok=True)
 
@@ -111,7 +109,6 @@ async def analyze_body(
         measurements["chest"], measurements["waist"], measurements["hips"], "Men"
     )
 
-    # Session only — return results, don't save to DB
     return {
         "success": True,
         "measurements": measurements,
@@ -125,8 +122,7 @@ async def analyze_body(
 @router.post("/measurements")
 def save_measurements(
     data: ManualMeasurements,
-    user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    user: dict = Depends(get_current_user),
 ):
     """Save manually entered measurements and get size recommendation."""
     measurements = {
@@ -140,9 +136,12 @@ def save_measurements(
 
     size_info = measurements_to_size(data.chest, data.waist, data.hips, data.gender)
 
-    user.measurements = measurements
-    db.commit()
-    db.refresh(user)
+    # Save to user profile in DynamoDB
+    users_table.update_item(
+        Key={"email": user["email"]},
+        UpdateExpression="SET measurements = :m",
+        ExpressionAttributeValues=to_decimal({":m": measurements}),
+    )
 
     return {
         "measurements": measurements,

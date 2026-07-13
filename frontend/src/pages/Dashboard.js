@@ -11,10 +11,11 @@ const CATEGORIES = [
 ];
 
 export default function Dashboard() {
-  const { user } = useAuth(); // eslint-disable-line no-unused-vars
+  const { user, isGuest } = useAuth();
   const [stats, setStats] = useState({ total: 0, types: {} });
 
   useEffect(() => {
+    if (isGuest) return;
     getItems().then((res) => {
       const items = res.data;
       const types = {};
@@ -23,7 +24,7 @@ export default function Dashboard() {
       });
       setStats({ total: items.length, types });
     }).catch(() => {});
-  }, []);
+  }, [isGuest]);
 
   return (
     <div className="dashboard">

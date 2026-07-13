@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import { getCart, updateCartItem, removeFromCart } from "../services/api";
 import { API_BASE, resolveImageUrl } from "../services/api";
 
 export default function Cart() {
+  const { isGuest } = useAuth();
   const [cart, setCart] = useState({ items: [], total: 0, count: 0 });
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -88,8 +90,17 @@ export default function Cart() {
                 <span>Total</span>
                 <span>&#8377;{cart.total.toFixed(0)}</span>
               </div>
-              <button className="btn-primary summary-checkout" onClick={() => navigate("/checkout")}>
-                Proceed to Checkout
+              <button
+                className="btn-primary summary-checkout"
+                onClick={() => {
+                  if (isGuest) {
+                    navigate("/login", { state: { redirectAfter: "/checkout" } });
+                  } else {
+                    navigate("/checkout");
+                  }
+                }}
+              >
+                {isGuest ? "Sign In to Checkout" : "Proceed to Checkout"}
               </button>
               <Link to="/shop" className="summary-continue">Continue Shopping</Link>
             </div>

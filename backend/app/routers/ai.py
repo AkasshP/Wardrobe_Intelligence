@@ -2,7 +2,7 @@ import json
 import boto3
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
-from app.middleware.auth_middleware import get_current_user
+from app.middleware.auth_middleware import get_current_user, get_current_user_or_guest
 from app.dynamo import user_items_table, from_decimal
 from boto3.dynamodb.conditions import Key
 
@@ -59,7 +59,7 @@ def _invoke_haiku_vision(image_url: str, prompt: str) -> str:
 
 
 @router.post("/chat")
-def style_chat(req: ChatRequest, user: dict = Depends(get_current_user)):
+def style_chat(req: ChatRequest, user: dict = Depends(get_current_user_or_guest)):
     """AI Style Chatbot — fashion advice powered by Amazon Nova Micro."""
     # Get user context
     wardrobe_resp = user_items_table.query(
@@ -92,7 +92,7 @@ User: {req.message}"""
 
 
 @router.post("/classify")
-def classify_clothing(req: ClassifyRequest, user: dict = Depends(get_current_user)):
+def classify_clothing(req: ClassifyRequest, user: dict = Depends(get_current_user_or_guest)):
     """Classify clothing from image using Claude Haiku Vision."""
     prompt = """Analyze this clothing item and return JSON only:
 {

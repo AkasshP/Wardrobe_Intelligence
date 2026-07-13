@@ -1,12 +1,15 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import { getProduct, getProducts, addToCart } from "../services/api";
 import { API_BASE, resolveImageUrl } from "../services/api";
 import api from "../services/api";
 
 const CATEGORIES = ["Tshirts", "Shirts", "Jeans", "Trousers", "Shorts", "Jackets", "Dresses", "Sweaters"];
+const GUEST_TRYON_LIMIT = 3;
 
 export default function TryOn() {
+  const { isGuest } = useAuth();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const productId = searchParams.get("product");
@@ -17,6 +20,13 @@ export default function TryOn() {
   const [error, setError] = useState("");
   const [addedToBag, setAddedToBag] = useState(false);
   const [toast, setToast] = useState(null);
+  const [showSignupPrompt, setShowSignupPrompt] = useState(false);
+
+  // Guest try-on attempt tracking
+  const [tryonAttempts, setTryonAttempts] = useState(() => {
+    const saved = localStorage.getItem("tryonAttempts");
+    return saved ? parseInt(saved, 10) : 0;
+  });
 
   // Session chaining
   const [sessionHistory, setSessionHistory] = useState(() => {
@@ -54,6 +64,12 @@ export default function TryOn() {
   const displayPhoto = currentBase ? `${API_BASE}${currentBase}` : bodyPhoto;
 
   const handleTryOn = async () => {
+    // Guest limit check
+    if (isGuest && tryonAttempts >= GUEST_TRYON_LIMIT) {
+      setShowSignupPrompt(true);
+      return;
+    }
+
     setProcessing(true);
     setError("");
     setResultImage(null);
@@ -90,6 +106,11 @@ export default function TryOn() {
               if (statusRes.data.status === "succeeded") {
                 const resultUrl = statusRes.data.result_image;
                 setResultImage(resultUrl);
+                if (isGuest) {
+                  const newCount = tryonAttempts + 1;
+                  setTryonAttempts(newCount);
+                  localStorage.setItem("tryonAttempts", newCount.toString());
+                }
                 const newEntry = {
                   productId: product.id,
                   productName: product.name,
@@ -160,6 +181,21 @@ export default function TryOn() {
     setTimeout(() => setAddedToBag(false), 2000);
   };
 
+  if (showSignupPrompt) {
+    return (
+      <div className="page">
+        <div className="cart-empty">
+          <h3>You've used all {GUEST_TRYON_LIMIT} free try-ons</h3>
+          <p>Create a free account to get unlimited virtual try-ons and save your results.</p>
+          <div style={{ display: "flex", gap: "1rem", justifyContent: "center", marginTop: "1.5rem" }}>
+            <Link to="/register" className="btn-primary">Sign Up Free</Link>
+            <Link to="/login" className="btn-secondary">Already have an account? Log in</Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!bodyPhoto && !currentBase) {
     return (
       <div className="page">
@@ -183,6 +219,12 @@ export default function TryOn() {
       <div className="cart-hero">
         <h1>Virtual Try-On</h1>
         <p>AI-powered — see how it looks on you</p>
+        {isGuest && (
+          <p style={{ fontSize: "0.75rem", opacity: 0.7, marginTop: "0.5rem" }}>
+            {GUEST_TRYON_LIMIT - tryonAttempts} free {GUEST_TRYON_LIMIT - tryonAttempts === 1 ? "try" : "tries"} remaining
+            &nbsp;·&nbsp;<Link to="/register" style={{ color: "inherit", textDecoration: "underline" }}>Sign up for unlimited</Link>
+          </p>
+        )}
       </div>
 
       <div className="page">

@@ -3,9 +3,21 @@ import { getMe } from "../services/api";
 
 const AuthContext = createContext(null);
 
+function getOrCreateGuestId() {
+  let guestId = localStorage.getItem("guest_id");
+  if (!guestId) {
+    guestId = crypto.randomUUID();
+    localStorage.setItem("guest_id", guestId);
+  }
+  return guestId;
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [guestId] = useState(getOrCreateGuestId);
+
+  const isGuest = !user;
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -30,7 +42,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, setUser, loading, loginUser, logout }}>
+    <AuthContext.Provider value={{ user, setUser, loading, loginUser, logout, isGuest, guestId }}>
       {children}
     </AuthContext.Provider>
   );

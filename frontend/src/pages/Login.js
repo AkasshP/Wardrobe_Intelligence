@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { login, getMe } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import Logo from "../components/Logo";
@@ -10,6 +10,8 @@ export default function Login() {
   const [error, setError] = useState("");
   const { loginUser } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const redirectTo = location.state?.redirectAfter || "/";
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -19,7 +21,7 @@ export default function Login() {
       localStorage.setItem("token", res.data.access_token);
       const me = await getMe();
       loginUser(res.data.access_token, me.data);
-      navigate("/");
+      navigate(redirectTo);
     } catch {
       setError("Invalid email or password");
     }
