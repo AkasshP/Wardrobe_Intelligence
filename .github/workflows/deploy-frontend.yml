@@ -15,7 +15,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
 
       - name: Install dependencies
         working-directory: frontend
@@ -24,7 +24,7 @@ jobs:
       - name: Build
         working-directory: frontend
         env:
-          REACT_APP_API_URL: ${{ secrets.API_URL }}
+          REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
         run: npm run build
 
       - name: Configure AWS
