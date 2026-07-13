@@ -26,6 +26,7 @@ jobs:
       - name: Build
         working-directory: frontend
         env:
+          CI: false
           REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
         run: npm run build
 
